@@ -181,7 +181,7 @@ func init() {
 				return
 			}
 			// 是否存在该歌单
-			APIURL := cfg.APIURL + "playlist/track/all?id=" + listID
+			APIURL := cfg.APIURL + "playlist/track/all?id=" + listID + "&limit=1000"
 			data, err := web.GetData(APIURL)
 			if err != nil {
 				ctx.SendChain(message.Text(serviceErr, err))
@@ -305,7 +305,7 @@ func init() {
 
 // 随机从歌单下载歌曲(歌单ID, 音乐保存路径)
 func drawByAPI(playlistID int64, musicPath string) (musicName string, err error) {
-	APIURL := cfg.APIURL + "playlist/track/all?id=" + strconv.FormatInt(playlistID, 10)
+	APIURL := cfg.APIURL + "playlist/track/all?id=" + strconv.FormatInt(playlistID, 10) + "&limit=1000"
 	data, err := web.GetData(APIURL)
 	if err != nil {
 		err = errors.Errorf("无法获取歌单列表\n%s", err)
@@ -359,7 +359,7 @@ func drawByAPI(playlistID int64, musicPath string) (musicName string, err error)
 
 // 下载歌单歌曲(歌单ID, 音乐保存路径)
 func downloadlist(playlistID int64, musicPath string) error {
-	APIURL := cfg.APIURL + "playlist/track/all?id=" + strconv.FormatInt(playlistID, 10)
+	APIURL := cfg.APIURL + "playlist/track/all?id=" + strconv.FormatInt(playlistID, 10) + "&limit=1000"
 	data, err := web.GetData(APIURL)
 	if err != nil {
 		return err
