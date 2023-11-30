@@ -2,7 +2,6 @@ package guessmusic
 
 import (
 	"encoding/json"
-	"github.com/FloatTech/floatbox/process"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -10,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/FloatTech/floatbox/process"
 
 	wyy "github.com/FloatTech/AnimeAPI/neteasemusic"
 	"github.com/FloatTech/floatbox/file"
@@ -307,7 +308,6 @@ func init() {
 
 // DownloadMusic 下载网易云音乐(歌曲ID，歌曲名称，下载路径)
 func DownloadMusic(musicID int, musicName, pathOfMusic string) error {
-
 	APIURL := cfg.APIURL + "song/url?id=" + strconv.Itoa(musicID)
 	data, err := web.GetData(APIURL)
 	if err != nil {
