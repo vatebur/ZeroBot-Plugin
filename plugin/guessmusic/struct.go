@@ -54,6 +54,49 @@ type qrInfo struct {
 	} `json:"data"`
 }
 
+type musicDownloadURL struct {
+	Data struct {
+		ID                 int         `json:"id"`
+		URL                string      `json:"url"`
+		Br                 int         `json:"br"`
+		Size               int         `json:"size"`
+		Md5                interface{} `json:"md5"`
+		Code               int         `json:"code"`
+		Expi               int         `json:"expi"`
+		Type               interface{} `json:"type"`
+		Gain               int         `json:"gain"`
+		Peak               interface{} `json:"peak"`
+		Fee                int         `json:"fee"`
+		Uf                 interface{} `json:"uf"`
+		Payed              int         `json:"payed"`
+		Flag               int         `json:"flag"`
+		CanExtend          bool        `json:"canExtend"`
+		FreeTrialInfo      interface{} `json:"freeTrialInfo"`
+		Level              interface{} `json:"level"`
+		EncodeType         interface{} `json:"encodeType"`
+		ChannelLayout      interface{} `json:"channelLayout"`
+		FreeTrialPrivilege struct {
+			ResConsumable      bool        `json:"resConsumable"`
+			UserConsumable     bool        `json:"userConsumable"`
+			ListenType         interface{} `json:"listenType"`
+			CannotListenReason int         `json:"cannotListenReason"`
+			PlayReason         interface{} `json:"playReason"`
+		} `json:"freeTrialPrivilege"`
+		FreeTimeTrialPrivilege struct {
+			ResConsumable  bool `json:"resConsumable"`
+			UserConsumable bool `json:"userConsumable"`
+			Type           int  `json:"type"`
+			RemainTime     int  `json:"remainTime"`
+		} `json:"freeTimeTrialPrivilege"`
+		URLSource   int         `json:"urlSource"`
+		RightSource int         `json:"rightSource"`
+		PodcastCtrp interface{} `json:"podcastCtrp"`
+		EffectTypes interface{} `json:"effectTypes"`
+		Time        int         `json:"time"`
+	} `json:"data"`
+	Code int `json:"code"`
+}
+
 // 获取歌单信息
 type listInfoOfAPI struct {
 	Code          int         `json:"code"`

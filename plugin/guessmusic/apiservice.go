@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/FloatTech/floatbox/process"
+
 	wyy "github.com/FloatTech/AnimeAPI/neteasemusic"
 	"github.com/FloatTech/floatbox/file"
 	"github.com/FloatTech/floatbox/web"
@@ -303,6 +305,37 @@ func init() {
 		})
 }
 
+// DownloadMusic 下载网易云音乐(歌曲ID，歌曲名称，下载路径)
+func DownloadMusic(musicID int, musicName, pathOfMusic string) error {
+
+	downMusic := pathOfMusic + "/" + musicName + ".mp3"
+
+	if file.IsNotExist(downMusic) {
+
+		// 获取歌曲下载URL
+		APIURL := cfg.APIURL + "song/url?id=" + strconv.Itoa(musicID)
+		data, err := web.GetData(APIURL)
+		if err != nil {
+			return err
+		}
+		var parsed musicDownloadURL
+		err = json.Unmarshal(data, &parsed)
+		if err != nil {
+			return err
+		}
+		if parsed.Code != 200 {
+			err = errors.Errorf("requset code : %d", parsed.Code)
+			return err
+		}
+
+		// 下载歌曲
+		err = file.DownloadTo(parsed.Data.URL, downMusic)
+		process.SleepAbout1sTo2s()
+		return err
+	}
+	return nil
+}
+
 // 随机从歌单下载歌曲(歌单ID, 音乐保存路径)
 func drawByAPI(playlistID int64, musicPath string) (musicName string, err error) {
 	APIURL := cfg.APIURL + "playlist/track/all?id=" + strconv.FormatInt(playlistID, 10) + "&limit=1000"
@@ -346,7 +379,7 @@ func drawByAPI(playlistID int64, musicPath string) (musicName string, err error)
 		name += " - " + artistName
 	}
 	// 下载歌曲
-	err = wyy.DownloadMusic(musicID, name, musicPath)
+	err = DownloadMusic(musicID, name, musicPath)
 	if err == nil {
 		musicName = name + ".mp3"
 		if cfg.Local {
@@ -401,7 +434,7 @@ func downloadlist(playlistID int64, musicPath string) error {
 			musicName += " - " + artistName
 		}
 		// 下载歌曲
-		err = wyy.DownloadMusic(musicID, musicName, musicPath)
+		err = DownloadMusic(musicID, musicName, musicPath)
 		if err == nil {
 			if cfg.Local {
 				// 下载歌词
@@ -440,7 +473,7 @@ func downloadByOvooa(playlistID int64, musicPath string) (musicName string, err 
 		}
 		name := musicList[0]
 		// 下载歌曲
-		err = wyy.DownloadMusic(mid, name, musicPath)
+		err = DownloadMusic(mid, name, musicPath)
 		if err == nil {
 			musicName = name + ".mp3"
 			if cfg.Local {
