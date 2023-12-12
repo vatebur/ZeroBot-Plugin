@@ -214,7 +214,7 @@ func musicLottery(musicPath, listName string) (pathOfMusic, musicName string, er
 	if playlistID == 0 || !cfg.API {
 		musicName = getLocalMusic(files, 10)
 	} else {
-		switch rand.Intn(3) { // 三分二概率抽取API的
+		switch 1 { //不走API只猜本地
 		case 1:
 			musicName = getLocalMusic(files, 10)
 		default:
