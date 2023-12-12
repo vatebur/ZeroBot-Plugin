@@ -307,11 +307,9 @@ func init() {
 
 // DownloadMusic 下载网易云音乐(歌曲ID，歌曲名称，下载路径)
 func DownloadMusic(musicID int, musicName, pathOfMusic string) error {
-
 	downMusic := pathOfMusic + "/" + musicName + ".mp3"
 
 	if file.IsNotExist(downMusic) {
-
 		// 获取歌曲下载URL
 		APIURL := cfg.APIURL + "song/url?id=" + strconv.Itoa(musicID)
 		data, err := web.GetData(APIURL)
