@@ -145,7 +145,8 @@ func init() {
 							tick.Stop()
 							after.Stop()
 							ctx.SendChain(message.Reply(c.Event.MessageID), messageStr)
-							ctx.SendChain(message.Record("file:///" + pathOfMusic + musicName))
+							//歌曲结束后不发送完整歌曲
+							//ctx.SendChain(message.Record("file:///" + pathOfMusic + musicName))
 						} else {
 							wait.Reset(40 * time.Second)
 							tick.Reset(105 * time.Second)
@@ -286,7 +287,7 @@ func gameMatch(c *zero.Ctx, beginner int64, musicInfo []string, answerTimes, tic
 	switch {
 	case answer == "取消":
 		if c.Event.UserID == beginner {
-			return message.Text("游戏已取消,猜歌答案是\n", musicInfo[len(musicInfo)-1], "\n\n\n下面欣赏猜歌的歌曲"), answerTimes, tickTimes, true
+			return message.Text("游戏已取消,猜歌答案是\n", musicInfo[len(musicInfo)-1]), answerTimes, tickTimes, true
 		}
 		return message.Text("你无权限取消"), answerTimes, tickTimes, false
 	case answer == "提示":
@@ -296,11 +297,11 @@ func gameMatch(c *zero.Ctx, beginner int64, musicInfo []string, answerTimes, tic
 		}
 		return message.Text("再听这段音频,要仔细听哦"), answerTimes, tickTimes, false
 	case strings.Contains(musicInfo[0], answer) || strings.EqualFold(musicInfo[0], answer):
-		return message.Text("太棒了,你猜对歌曲名了！答案是\n", musicInfo[len(musicInfo)-1], "\n\n下面欣赏猜歌的歌曲"), answerTimes, tickTimes, true
+		return message.Text("太棒了,你猜对歌曲名了！答案是\n", musicInfo[len(musicInfo)-1]), answerTimes, tickTimes, true
 	case strings.Contains(musicInfo[1], answer) || strings.EqualFold(musicInfo[1], answer):
-		return message.Text("太棒了,你猜对歌手名了！答案是\n", musicInfo[len(musicInfo)-1], "\n\n下面欣赏猜歌的歌曲"), answerTimes, tickTimes, true
+		return message.Text("太棒了,你猜对歌手名了！答案是\n", musicInfo[len(musicInfo)-1]), answerTimes, tickTimes, true
 	case len(musicInfo) == 4 && (strings.Contains(musicInfo[2], answer) || strings.EqualFold(musicInfo[2], answer)):
-		return message.Text("太棒了,你猜对相关信息了！答案是\n", musicInfo[len(musicInfo)-1], "\n\n下面欣赏猜歌的歌曲"), answerTimes, tickTimes, true
+		return message.Text("太棒了,你猜对相关信息了！答案是\n", musicInfo[len(musicInfo)-1]), answerTimes, tickTimes, true
 	default:
 		answerTimes++
 		tickTimes++
@@ -308,7 +309,7 @@ func gameMatch(c *zero.Ctx, beginner int64, musicInfo []string, answerTimes, tic
 		case tickTimes > 2 && answerTimes < 6:
 			return message.Text("答案不对哦,还有", 6-answerTimes, "次答题,加油啊~"), answerTimes, tickTimes, false
 		case tickTimes > 2:
-			return message.Text("次数到了,没能猜出来。答案是\n", musicInfo[len(musicInfo)-1], "\n\n下面欣赏猜歌的歌曲"), answerTimes, tickTimes, true
+			return message.Text("次数到了,没能猜出来。答案是\n", musicInfo[len(musicInfo)-1]), answerTimes, tickTimes, true
 		default:
 			return message.Text("答案不对,再听这段音频,要仔细听哦"), answerTimes, tickTimes, false
 		}
