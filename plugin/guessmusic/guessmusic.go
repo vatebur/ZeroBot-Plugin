@@ -145,7 +145,7 @@ func init() {
 							tick.Stop()
 							after.Stop()
 							ctx.SendChain(message.Reply(c.Event.MessageID), messageStr)
-							//歌曲结束后不发送完整歌曲
+							// 歌曲结束后不发送完整歌曲
 							//ctx.SendChain(message.Record("file:///" + pathOfMusic + musicName))
 						} else {
 							wait.Reset(40 * time.Second)
@@ -214,7 +214,7 @@ func musicLottery(musicPath, listName string) (pathOfMusic, musicName string, er
 	if playlistID == 0 || !cfg.API {
 		musicName = getLocalMusic(files, 10)
 	} else {
-		switch 1 { //不走API只猜本地
+		switch 1 { // 不走API只猜本地
 		case 1:
 			musicName = getLocalMusic(files, 10)
 		default:
