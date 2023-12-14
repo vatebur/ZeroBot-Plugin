@@ -145,7 +145,7 @@ func init() {
 							tick.Stop()
 							after.Stop()
 							ctx.SendChain(message.Reply(c.Event.MessageID), messageStr)
-							//歌曲结束后不发送完整歌曲
+							// 歌曲结束后不发送完整歌曲
 							//ctx.SendChain(message.Record("file:///" + pathOfMusic + musicName))
 						} else {
 							wait.Reset(40 * time.Second)
