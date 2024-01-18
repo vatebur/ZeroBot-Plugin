@@ -106,7 +106,13 @@ func init() {
 			// 如果签到时间是今天
 			ctx.SendChain(message.Reply(ctx.Event.MessageID), message.Text("今天你已经签到过了！"))
 			if file.IsExist(drawedFile) {
-				ctx.SendChain(message.Image("file:///" + file.BOTPATH + "/" + drawedFile))
+				// 读取图片文件
+				drawedFileData, err := os.ReadFile(file.BOTPATH + "/" + drawedFile)
+				if err != nil {
+					ctx.SendChain(message.Text("ERROR: 无法读取图片文件", err))
+					return
+				}
+				ctx.SendChain(message.ImageBytes(drawedFileData))
 			}
 			return
 		case siUpdateTimeStr != today:
@@ -176,7 +182,13 @@ func init() {
 			ctx.SendChain(message.Text("ERROR: ", err))
 			return
 		}
-		ctx.SendChain(message.Image("file:///" + file.BOTPATH + "/" + drawedFile))
+		// 读取图片文件
+		drawedFileData, err := os.ReadFile(file.BOTPATH + "/" + drawedFile)
+		if err != nil {
+			ctx.SendChain(message.Text("ERROR: 无法读取图片文件", err))
+			return
+		}
+		ctx.SendChain(message.ImageBytes(drawedFileData))
 	})
 
 	engine.OnPrefix("获得签到背景", zero.OnlyGroup).Limit(ctxext.LimitByGroup).SetBlock(true).
@@ -193,7 +205,12 @@ func init() {
 				ctx.SendChain(message.Reply(ctx.Event.MessageID), message.Text("请先签到！"))
 				return
 			}
-			if id := ctx.SendChain(message.Image("file:///" + file.BOTPATH + "/" + picFile)); id.ID() == 0 {
+			picFileeData, err := os.ReadFile(file.BOTPATH + "/" + picFile)
+			if err != nil {
+				ctx.SendChain(message.Text("ERROR: 无法读取图片文件", err))
+				return
+			}
+			if id := ctx.SendChain(message.ImageBytes(picFileeData)); id.ID() == 0 {
 				ctx.SendChain(message.Text("ERROR: 消息发送失败, 账号可能被风控"))
 			}
 		})
@@ -202,7 +219,13 @@ func init() {
 			today := time.Now().Format("20060102")
 			drawedFile := cachePath + today + "scoreRank.png"
 			if file.IsExist(drawedFile) {
-				ctx.SendChain(message.Image("file:///" + file.BOTPATH + "/" + drawedFile))
+				// 读取图片文件
+				drawedFileData, err := os.ReadFile(file.BOTPATH + "/" + drawedFile)
+				if err != nil {
+					ctx.SendChain(message.Text("ERROR: 无法读取图片文件", err))
+					return
+				}
+				ctx.SendChain(message.ImageBytes(drawedFileData))
 				return
 			}
 			st, err := sdb.GetScoreRankByTopN(10)
@@ -267,7 +290,13 @@ func init() {
 				ctx.SendChain(message.Text("ERROR: ", err))
 				return
 			}
-			ctx.SendChain(message.Image("file:///" + file.BOTPATH + "/" + drawedFile))
+			// 读取图片文件
+			drawedFileData, err := os.ReadFile(file.BOTPATH + "/" + drawedFile)
+			if err != nil {
+				ctx.SendChain(message.Text("ERROR: 无法读取图片文件", err))
+				return
+			}
+			ctx.SendChain(message.ImageBytes(drawedFileData))
 		})
 	engine.OnRegex(`^设置签到预设\s*(\d+)$`, zero.SuperUserPermission).Limit(ctxext.LimitByUser).SetBlock(true).Handle(func(ctx *zero.Ctx) {
 		key := ctx.State["regex_matched"].([]string)[1]
