@@ -2,7 +2,6 @@ package guessmusic
 
 import (
 	"bytes"
-	log "github.com/sirupsen/logrus"
 	"io/fs"
 	"math/rand"
 	"os"
@@ -11,6 +10,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/FloatTech/floatbox/file"
 	"github.com/FloatTech/zbputils/ctxext"
@@ -156,7 +157,7 @@ func init() {
 							tick.Stop()
 							after.Stop()
 							ctx.SendChain(message.Reply(c.Event.MessageID), messageStr)
-							//歌曲结束后不发送完整歌曲
+							// 歌曲结束后不发送完整歌曲
 							//ctx.SendChain(message.Record("file:///" + pathOfMusic + musicName))
 						} else {
 							wait.Reset(40 * time.Second)
@@ -225,7 +226,7 @@ func musicLottery(musicPath, listName string) (pathOfMusic, musicName string, er
 	if playlistID == 0 || !cfg.API {
 		musicName = getLocalMusic(files, 10)
 	} else {
-		switch 1 { //不走API只猜本地
+		switch 1 { // 不走API只猜本地
 		case 1:
 			musicName = getLocalMusic(files, 10)
 		default:
@@ -295,7 +296,7 @@ func cutMusic(musicName, pathOfMusic, outputPath string) (err error) {
 // 数据匹配（结果信息，答题次数，提示次数，是否结束游戏）
 func gameMatch(c *zero.Ctx, beginner int64, musicInfo []string, answerTimes, tickTimes int) (message.MessageSegment, int, int, bool) {
 	answer := strings.Replace(c.Event.Message.String(), "-", "", 1)
-	//大小写，简繁体转换
+	// 大小写，简繁体转换
 	answer = ConvertText(answer)
 	for i, element := range musicInfo {
 		musicInfo[i] = ConvertText(element)
