@@ -2,7 +2,6 @@ package guessmusic
 
 import (
 	"bytes"
-	log "github.com/sirupsen/logrus"
 	"io/fs"
 	"math/rand"
 	"os"
