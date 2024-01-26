@@ -2,6 +2,8 @@ package guessmusic
 
 import (
 	"bytes"
+	"encoding/base64"
+	"io"
 	"io/fs"
 	"math/rand"
 	"os"
@@ -109,8 +111,14 @@ func init() {
 				ctx.SendChain(message.Text(err))
 				return
 			}
+			// 猜歌环节-提供猜歌选项
+			files, err := os.ReadDir(pathOfMusic)
+			if err != nil {
+				return
+			}
+			getMusicSelect(ctx, files, musicName)
 			// 进行猜歌环节
-			ctx.SendChain(message.Record("file:///" + file.BOTPATH + "/" + outputPath + "0.wav"))
+			trySendFile(file.BOTPATH+"/"+outputPath+"0.wav", ctx)
 			var next *zero.FutureEvent
 			if ctx.State["regex_matched"].([]string)[1] == "个人" {
 				next = zero.NewFutureEvent("message", 999, false, zero.OnlyGroup, zero.RegexRule(`^-\S{1,}`), ctx.CheckSession())
@@ -147,7 +155,7 @@ func init() {
 					ctx.SendChain(
 						message.Text("好像有些难度呢,再听这段音频,要仔细听哦"),
 					)
-					ctx.SendChain(message.Record("file:///" + file.BOTPATH + "/" + outputPath + strconv.Itoa(tickCount) + ".wav"))
+					trySendFile(file.BOTPATH+"/"+outputPath+strconv.Itoa(tickCount)+".wav", ctx)
 				case c := <-recv:
 					wg.Add(1)
 					go func() {
@@ -167,7 +175,7 @@ func init() {
 								ctx.SendChain(message.Reply(c.Event.MessageID), messageStr)
 							} else {
 								ctx.SendChain(message.Reply(c.Event.MessageID), messageStr)
-								ctx.SendChain(message.Record("file:///" + file.BOTPATH + "/" + outputPath + strconv.Itoa(tickCount) + ".wav"))
+								trySendFile(file.BOTPATH+"/"+outputPath+strconv.Itoa(tickCount)+".wav", ctx)
 							}
 						}
 						wg.Done()
@@ -343,4 +351,76 @@ func ConvertText(input string) string {
 		return toLower
 	}
 	return toLower
+}
+
+func getMusicSelect(ctx *zero.Ctx, files []fs.DirEntry, musicName string) {
+	// 生成音乐选项
+	var musicInfo []string
+	musicInfo = append(musicInfo, musicName)
+	for i := 1; i < 4; i++ {
+		musicInfo = append(musicInfo, getLocalMusic(files, 10))
+		for musicInfo[0] == musicInfo[i] {
+			musicInfo[i] = getLocalMusic(files, 10)
+		}
+	}
+	// 对调正确答案
+	j := rand.Intn(len(musicInfo))
+	musicInfo[0], musicInfo[j] = musicInfo[j], musicInfo[0]
+
+	musicNameSelect := "请选出正确歌曲：\n"
+	for i := 0; i < len(musicInfo); i++ {
+		// 解析歌曲信息
+		music := strings.Split(musicInfo[i], ".")
+		// 获取音乐后缀
+		musictype := music[len(music)-1]
+		if !strings.Contains(musictypelist, musictype) {
+			ctx.SendChain(message.Text("抽取到了歌曲：\n",
+				musicInfo[i], "\n该歌曲不是音乐后缀,请联系bot主人修改"))
+		}
+		// 获取音乐信息
+		musicInfo := strings.Split(strings.ReplaceAll(musicInfo[i], "."+musictype, ""), " - ")
+		infoNum := len(musicInfo)
+		if infoNum == 1 {
+			ctx.SendChain(message.Text("抽取到了歌曲：\n",
+				musicInfo[i], "\n该歌曲命名不符合命名规则,请联系bot主人修改"))
+		}
+		musicNameSelect += musicInfo[0] + "  歌手:" + musicInfo[1] + "\n"
+	}
+	ctx.SendChain(message.Text(musicNameSelect))
+}
+
+// 使用"file:"发送文件失败后，改用base64发送
+func trySendFile(filePath string, ctx *zero.Ctx) {
+	if id := ctx.SendChain(message.Record("file:///" + filePath)); id.ID() != 0 {
+		return
+	}
+	musicFile, err := os.Open(filePath)
+	if err != nil {
+		ctx.SendChain(message.Text("ERROR: 无法打开文件", err))
+		return
+	}
+	defer func(imgFile *os.File) {
+		err := imgFile.Close()
+		if err != nil {
+			return
+		}
+	}(musicFile)
+	// 使用 base64.NewEncoder 将文件内容编码为 base64 字符串
+	var encodedFileData strings.Builder
+	encodedFileData.WriteString("base64://")
+	encoder := base64.NewEncoder(base64.StdEncoding, &encodedFileData)
+	_, err = io.Copy(encoder, musicFile)
+	if err != nil {
+		ctx.SendChain(message.Text("ERROR: 无法编码文件内容", err))
+		return
+	}
+	err = encoder.Close()
+	if err != nil {
+		return
+	}
+	fileBase64 := encodedFileData.String()
+	if id := ctx.SendChain(message.Record(fileBase64)); id.ID() == 0 {
+		ctx.SendChain(message.Text("ERROR: 无法读取文件", err))
+		return
+	}
 }
