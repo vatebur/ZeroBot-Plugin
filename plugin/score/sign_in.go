@@ -343,12 +343,9 @@ func initPic(picFile string, uid int64) (avatar []byte, err error) {
 	return avatar, os.WriteFile(picFile, data, 0644)
 }
 
-// 使用"file:"发送图片失败后，改用base64发送
+// 用base64发送图片
 func trySendImage(filePath string, ctx *zero.Ctx) {
 	filePath = file.BOTPATH + "/" + filePath
-	if id := ctx.SendChain(message.Image("file:///" + filePath)); id.ID() != 0 {
-		return
-	}
 	imgFile, err := os.Open(filePath)
 	if err != nil {
 		ctx.SendChain(message.Text("ERROR: 无法打开文件", err))

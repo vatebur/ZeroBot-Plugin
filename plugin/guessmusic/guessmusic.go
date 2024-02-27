@@ -304,11 +304,9 @@ func cutMusic(musicName, pathOfMusic, outputPath string) (err error) {
 // 数据匹配（结果信息，答题次数，提示次数，是否结束游戏）
 func gameMatch(c *zero.Ctx, beginner int64, musicInfo []string, answerTimes, tickTimes int) (message.MessageSegment, int, int, bool) {
 	answer := strings.Replace(c.Event.Message.String(), "-", "", 1)
-	// 大小写，简繁体转换
+	// 回答内容转小写，比对时再把标准答案转小写
 	answer = ConvertText(answer)
-	for i, element := range musicInfo {
-		musicInfo[i] = ConvertText(element)
-	}
+
 	switch {
 	case answer == "取消":
 		if c.Event.UserID == beginner {
@@ -321,11 +319,11 @@ func gameMatch(c *zero.Ctx, beginner int64, musicInfo []string, answerTimes, tic
 			return message.Text("已经没有提示了哦"), answerTimes, tickTimes, false
 		}
 		return message.Text("再听这段音频,要仔细听哦"), answerTimes, tickTimes, false
-	case strings.Contains(musicInfo[0], answer) || strings.EqualFold(musicInfo[0], answer):
+	case strings.Contains(ConvertText(musicInfo[0]), answer) || strings.EqualFold(ConvertText(musicInfo[0]), answer):
 		return message.Text("太棒了,你猜对歌曲名了！答案是\n", musicInfo[len(musicInfo)-1]), answerTimes, tickTimes, true
-	case strings.Contains(musicInfo[1], answer) || strings.EqualFold(musicInfo[1], answer):
+	case strings.Contains(ConvertText(musicInfo[1]), answer) || strings.EqualFold(ConvertText(musicInfo[1]), answer):
 		return message.Text("太棒了,你猜对歌手名了！答案是\n", musicInfo[len(musicInfo)-1]), answerTimes, tickTimes, true
-	case len(musicInfo) == 4 && (strings.Contains(musicInfo[2], answer) || strings.EqualFold(musicInfo[2], answer)):
+	case len(musicInfo) == 4 && (strings.Contains(ConvertText(musicInfo[2]), answer) || strings.EqualFold(ConvertText(musicInfo[2]), answer)):
 		return message.Text("太棒了,你猜对相关信息了！答案是\n", musicInfo[len(musicInfo)-1]), answerTimes, tickTimes, true
 	default:
 		answerTimes++
@@ -389,11 +387,8 @@ func getMusicSelect(ctx *zero.Ctx, files []fs.DirEntry, musicName string) {
 	ctx.SendChain(message.Text(musicNameSelect))
 }
 
-// 使用"file:"发送文件失败后，改用base64发送
+// 用base64发送
 func trySendFile(filePath string, ctx *zero.Ctx) {
-	if id := ctx.SendChain(message.Record("file:///" + filePath)); id.ID() != 0 {
-		return
-	}
 	musicFile, err := os.Open(filePath)
 	if err != nil {
 		ctx.SendChain(message.Text("ERROR: 无法打开文件", err))
