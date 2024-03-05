@@ -2,7 +2,9 @@
 package wordcount
 
 import (
+	"encoding/base64"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"sort"
@@ -175,7 +177,7 @@ func init() {
 				ctx.SendChain(message.Text("ERROR: ", err))
 				return
 			}
-			ctx.SendChain(message.Image("file:///" + file.BOTPATH + "/" + drawedFile))
+			trySendImage(drawedFile, ctx)
 		})
 }
 
@@ -200,3 +202,29 @@ type pairlist []pair
 func (p pairlist) Len() int           { return len(p) }
 func (p pairlist) Less(i, j int) bool { return p[i].Value < p[j].Value }
 func (p pairlist) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+
+// 用base64发送图片
+func trySendImage(filePath string, ctx *zero.Ctx) {
+	filePath = file.BOTPATH + "/" + filePath
+	imgFile, err := os.Open(filePath)
+	if err != nil {
+		ctx.SendChain(message.Text("ERROR: 无法打开文件", err))
+		return
+	}
+	defer imgFile.Close()
+	// 使用 base64.NewEncoder 将文件内容编码为 base64 字符串
+	var encodedFileData strings.Builder
+	encodedFileData.WriteString("base64://")
+	encoder := base64.NewEncoder(base64.StdEncoding, &encodedFileData)
+	_, err = io.Copy(encoder, imgFile)
+	if err != nil {
+		ctx.SendChain(message.Text("ERROR: 无法编码文件内容", err))
+		return
+	}
+	encoder.Close()
+	drawedFileBase64 := encodedFileData.String()
+	if id := ctx.SendChain(message.Image(drawedFileBase64)); id.ID() == 0 {
+		ctx.SendChain(message.Text("ERROR: 无法读取图片文件", err))
+		return
+	}
+}

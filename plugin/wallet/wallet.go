@@ -2,9 +2,12 @@
 package wallet
 
 import (
+	"encoding/base64"
+	"io"
 	"math"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/FloatTech/AnimeAPI/wallet"
@@ -46,7 +49,7 @@ func init() {
 			today := time.Now().Format("20060102")
 			drawedFile := cachePath + gid + today + "walletRank.png"
 			if file.IsExist(drawedFile) {
-				ctx.SendChain(message.Image("file:///" + file.BOTPATH + "/" + drawedFile))
+				trySendImage(drawedFile, ctx)
 				return
 			}
 			// 无缓存获取群员列表
@@ -120,6 +123,32 @@ func init() {
 				ctx.SendChain(message.Text("ERROR: ", err))
 				return
 			}
-			ctx.SendChain(message.Image("file:///" + file.BOTPATH + "/" + drawedFile))
+			trySendImage(drawedFile, ctx)
 		})
+}
+
+// 用base64发送图片
+func trySendImage(filePath string, ctx *zero.Ctx) {
+	filePath = file.BOTPATH + "/" + filePath
+	imgFile, err := os.Open(filePath)
+	if err != nil {
+		ctx.SendChain(message.Text("ERROR: 无法打开文件", err))
+		return
+	}
+	defer imgFile.Close()
+	// 使用 base64.NewEncoder 将文件内容编码为 base64 字符串
+	var encodedFileData strings.Builder
+	encodedFileData.WriteString("base64://")
+	encoder := base64.NewEncoder(base64.StdEncoding, &encodedFileData)
+	_, err = io.Copy(encoder, imgFile)
+	if err != nil {
+		ctx.SendChain(message.Text("ERROR: 无法编码文件内容", err))
+		return
+	}
+	encoder.Close()
+	drawedFileBase64 := encodedFileData.String()
+	if id := ctx.SendChain(message.Image(drawedFileBase64)); id.ID() == 0 {
+		ctx.SendChain(message.Text("ERROR: 无法读取图片文件", err))
+		return
+	}
 }
