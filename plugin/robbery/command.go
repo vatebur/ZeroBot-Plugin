@@ -36,7 +36,8 @@ var (
 			"4. 打劫失败罚款1000（钱不够不罚钱）\n" +
 			"5. 保险赔付0-80%\n" +
 			"6. 打劫成功获得对方0-5%+500的财产（最高1W）\n" +
-			"7. 打劫成功后24小时内不可再打劫/再被打劫\n",
+			"7. 每日可打劫或被打劫一次\n" +
+			"8. 打劫失败不计入次数\n",
 		PrivateDataFolder: "robbery",
 	}).ApplySingle(single.New(
 		single.WithKeyFn(func(ctx *zero.Ctx) int64 { return ctx.Event.GroupID }),

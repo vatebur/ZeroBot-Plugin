@@ -13,9 +13,9 @@ import (
 )
 
 type cdsheet struct {
-	Time     int64 // 时间
-	VictimID int64 // 群号
-	UserID   int64 // 用户
+	UserID   int64  // 劫匪
+	VictimID int64  // 受害者
+	Time     string // 时间
 }
 
 func init() {
@@ -100,20 +100,20 @@ func (sql *criminalRecord) judgeCD(victimID, uid int64) (ok bool, err error) {
 	}
 	cdinfo := cdsheet{}
 	_ = sql.db.Find("cdsheet", &cdinfo, limitID)
-	if time.Since(time.Unix(cdinfo.Time, 0)).Hours() > 24 {
-		// 如果CD已过就删除
+	if time.Now().Format("2006/01/02") != cdinfo.Time {
+		// // 如果跨天了就删除
 		err = sql.db.Del("cdsheet", limitID)
 		return true, err
 	}
 	return false, nil
 }
 
-func (sql *criminalRecord) queryCD(gid int64, uid int64) error {
+func (sql *criminalRecord) queryCD(vid int64, uid int64) error {
 	sql.Lock()
 	defer sql.Unlock()
 	return sql.db.Insert("cdsheet", &cdsheet{
-		Time:     time.Now().Unix(),
-		VictimID: gid,
 		UserID:   uid,
+		VictimID: vid,
+		Time:     time.Now().Format("2006/01/02"),
 	})
 }
