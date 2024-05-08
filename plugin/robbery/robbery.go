@@ -113,10 +113,10 @@ func init() {
 				return
 			}
 			userIncrMonry := math.Min(rand.Intn(victimWallet/20)+500, 10000)
-			victimDecrMonry := userIncrMonry / (rand.Intn(4) + 1)
+			victimDecrMoney := userIncrMonry / (rand.Intn(4) + 1)
 
 			// 记录结果
-			err = wallet.InsertWalletOf(victimID, -victimDecrMonry)
+			err = wallet.InsertWalletOf(victimID, -victimDecrMoney)
 			if err != nil {
 				ctx.SendChain(message.Text("[ERROR]:钱包坏掉力:\n", err))
 				return
@@ -134,7 +134,7 @@ func init() {
 			}
 
 			ctx.SendChain(message.At(uid), message.Text("打劫成功，钱包增加：", userIncrMonry, "ATRI币"))
-			ctx.SendChain(message.At(victimID), message.Text("保险公司对您进行了赔付，您实际损失：", victimDecrMonry, "ATRI币"))
+			ctx.SendChain(message.At(victimID), message.Text("保险公司对您进行了赔付，您实际损失：", victimDecrMoney, "ATRI币"))
 		})
 }
 
@@ -152,9 +152,9 @@ func (sql *robberyRepo) getRecord(victimID, uid int64) (ok bool, err error) {
 		// 没有记录即不用比较
 		return true, nil
 	}
-	cdinfo := robberyRecord{}
-	_ = sql.db.Find("criminal_record", &cdinfo, limitID)
-	if time.Now().Format("2006/01/02") != cdinfo.Time {
+	cdInfo := robberyRecord{}
+	_ = sql.db.Find("criminal_record", &cdInfo, limitID)
+	if time.Now().Format("2006/01/02") != cdInfo.Time {
 		// // 如果跨天了就删除
 		err = sql.db.Del("criminal_record", limitID)
 		return true, err
