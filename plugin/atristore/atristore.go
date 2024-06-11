@@ -19,6 +19,7 @@ import (
 	"image"
 	"image/color"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -28,13 +29,14 @@ type storeRepo struct {
 	sync.RWMutex
 }
 type storeRecord struct {
+	Id     string `db:"product_id"`     // 商品编号
 	Name   string `db:"product_name"`   // 商品名
 	Number int    `db:"product_number"` // 商品数量
 	Price  int    `db:"product_price"`  // 商品价格
 }
 type buyRecord struct {
-	BuyTime int64  `db:"buy_time"`     // 购买价格
 	UserID  int64  `db:"user_id"`      // 购买用户
+	BuyTime int64  `db:"buy_time"`     // 购买价格
 	Name    string `db:"product_name"` // 商品名
 	Number  int    `db:"buy_number"`   // 购买数量
 	Price   int    `db:"buy_price"`    // 购买价格
@@ -66,8 +68,14 @@ func init() {
 		dbData.db.DBPath = engine.DataFolder() + "atristore.db"
 		err := dbData.db.Open(time.Hour)
 		if err == nil {
-			// 创建CD表
-			err = dbData.db.Create("criminal_record", &storeRepo{})
+			// 创建商品表
+			err = dbData.db.Create("store_Record", &storeRecord{})
+			if err != nil {
+				ctx.SendChain(message.Text("[ERROR]:", err))
+				return false
+			}
+			// 创建购买记录表
+			err = dbData.db.Create("buy_Record", &buyRecord{})
 			if err != nil {
 				ctx.SendChain(message.Text("[ERROR]:", err))
 				return false
@@ -101,7 +109,144 @@ func init() {
 		}
 		ctx.SendChain(message.ImageBytes(pic))
 	})
+	engine.OnFullMatchGroup([]string{"商品管理"}, getdb).SetBlock(true).Limit(ctxext.LimitByUser).Handle(func(ctx *zero.Ctx) {
+		if !zero.OwnerPermission(ctx) {
+			ctx.Send("只有群主和主人才能管理商品")
+			return
+		}
+		msg := "请输入对应的序号进行管理：\n" +
+			"1. 新增商品: \n" +
+			"2. 修改商品\n" +
+			"3. 删除商品\n" +
+			"4. 退出"
+		ctx.SendChain(message.Text(msg))
+		manageIf := false
+		var manageNumber int
+		recv, cancel := zero.NewFutureEvent("message", 999, false, zero.CheckUser(ctx.Event.UserID)).Repeat()
+		defer cancel()
+		for {
+			select {
+			case <-time.After(time.Second * 120):
+				ctx.Send(
+					message.ReplyWithMessage(ctx.Event.MessageID,
+						message.Text("等待超时,退出管理功能"),
+					),
+				)
+				return
+			case e := <-recv:
+				manageNumber, err := strconv.Atoi(e.Event.Message.String())
+				if err != nil {
+					ctx.SendChain(message.At(ctx.Event.UserID), message.Text("请输入正确的序号"))
+					continue
+				}
+				if manageNumber == 4 {
+					ctx.Send(message.ReplyWithMessage(ctx.Event.MessageID, message.Text("已退出")))
+					return
+				}
+				manageIf = true
+			}
+			if manageIf {
+				break
+			}
+		}
 
+		if manageNumber > 1 {
+
+			// 先输出上牌列表，再让用户选择
+			infos, err := dbData.getStoreInfo()
+			if err != nil {
+				ctx.SendChain(message.Text("[ERROR]:获取商品信息失败", err))
+				return
+			}
+
+			msg := make(message.Message, 0, 3+len(infos))
+			for _, info := range infos {
+				msg = append(msg, message.Text("序号："), message.Text(info.Id), message.Text("\t商品名："), message.Text(info.Name))
+			}
+			ctx.SendChain(message.Text("序号：99 \t取消"))
+
+			ctx.SendChain(message.Text("请输入要管理的商品序号：\n", msg))
+
+			manageIf = false
+			recv, cancel = zero.NewFutureEvent("message", 999, false, zero.CheckUser(ctx.Event.UserID)).Repeat()
+			defer cancel()
+			for {
+				select {
+				case <-time.After(time.Second * 120):
+					ctx.Send(
+						message.ReplyWithMessage(ctx.Event.MessageID,
+							message.Text("等待超时,退出管理功能"),
+						),
+					)
+					return
+				case e := <-recv:
+					manageId, err := strconv.Atoi(e.Event.Message.String())
+					if err != nil || manageId >= len(infos) {
+						ctx.SendChain(message.At(ctx.Event.UserID), message.Text("请输入正确的序号"))
+						continue
+					}
+					if manageId == 99 {
+						ctx.Send(message.ReplyWithMessage(ctx.Event.MessageID, message.Text("已退出")))
+						return
+					}
+					manageIf = true
+				}
+				if manageIf {
+					break
+				}
+			}
+		}
+
+		if manageNumber ==3 {
+			// 删除 manageId
+		}
+
+		ctx.SendChain(message.Text("请输入要修改的值，按照（名称 数量 价格/万）格式，用空格分割,或回复“取消”取消\"\n"))
+		check :=false
+		list := []string{"商品名","数量","价格"}
+		recv, cancel = zero.NewFutureEvent("message", 999, false, zero.RegexRule(`^(取消|\d+ \d+ \d+)$`), zero.CheckUser(ctx.Event.UserID)).Repeat()
+		defer cancel()
+		for {
+			select {
+			case <-time.After(time.Second * 120):
+				ctx.Send(
+					message.ReplyWithMessage(ctx.Event.MessageID,
+						message.Text("等待超时,取消合成"),
+					),
+				)
+				return
+			case e := <-recv:
+				nextcmd := e.Event.Message.String()
+				if nextcmd == "取消" {
+					ctx.Send(
+						message.ReplyWithMessage(ctx.Event.MessageID,
+							message.Text("已取消合成"),
+						),
+					)
+					return
+				}
+				chooseList := strings.Split(nextcmd, " ")
+				objectName:= chooseList[0]
+				objectNumber:= chooseList[1]
+				objectPice:= chooseList[2]
+
+
+				list = []string{objectName, objectNumber, objectPice}
+
+				check = true
+			}
+			if check {
+				break
+			}
+
+			objectPice
+
+		}
+	}
+
+
+
+	})
 	engine.OnRegex(`^兑换(.*)\s*(\d*)$`, getdb).SetBlock(true).Limit(ctxext.LimitByUser).Handle(func(ctx *zero.Ctx) {
 		uid := ctx.Event.UserID
 		thingName := ctx.State["regex_matched"].([]string)[1]
@@ -124,7 +269,7 @@ func init() {
 			return
 		}
 		if !ok {
-			ctx.SendChain(message.Reply(ctx.Event.MessageID), message.Text("你慢了一步,物品被别人买走了"))
+			ctx.SendChain(message.Reply(ctx.Event.MessageID), message.Text("你慢了一步,物品库存不足"))
 			return
 		}
 		money := wallet.GetWalletOf(uid)
@@ -157,7 +302,7 @@ func init() {
 			}
 		}
 
-		if thingInfos[0].Number <= number {
+		if thingInfos[0].Number < number {
 			ctx.Send(message.ReplyWithMessage(ctx.Event.MessageID, message.Text("商店数量不足")))
 			return
 		}
@@ -189,18 +334,18 @@ func (sql *storeRepo) getStoreInfo() (thingInfos []storeRecord, err error) {
 	sql.Lock()
 	defer sql.Unlock()
 	thingInfo := storeRecord{}
-	err = sql.db.Create("storeRecord", &thingInfo)
+	err = sql.db.Create("store_Record", &thingInfo)
 	if err != nil {
 		return
 	}
-	count, err := sql.db.Count("storeRecord")
+	count, err := sql.db.Count("store_Record")
 	if err != nil {
 		return
 	}
 	if count == 0 {
 		return
 	}
-	err = sql.db.FindFor("storeRecord", &thingInfo, "ORDER by product_name", func() error {
+	err = sql.db.FindFor("store_Record", &thingInfo, "ORDER by product_name", func() error {
 		thingInfos = append(thingInfos, thingInfo)
 		return nil
 	})
@@ -259,11 +404,12 @@ func drawStoreInfoImage(storeInfo []storeRecord) (picImage image.Image, err erro
 		return nil, err
 	}
 	_, textH := canvas.MeasureString("高度")
+	idW, _ := canvas.MeasureString("编号")
 	nameW, _ := canvas.MeasureString("下界合金竿")
 	numberW, _ := canvas.MeasureString("10000")
 	priceW, _ := canvas.MeasureString("10000")
 
-	backW := int(10 + nameW + 50 + numberW + 50 + priceW + 10)
+	backW := int(10 + idW + 50 + nameW + 50 + numberW + 50 + priceW + 10)
 	backY := 10 + int(titleH*2+10)*2 + 10 + len(storeInfo)*int(textH*2) + 10
 	canvas = gg.NewContext(backW, math.Max(backY, 500))
 	// 画底色
@@ -287,19 +433,21 @@ func drawStoreInfoImage(storeInfo []storeRecord) (picImage image.Image, err erro
 	if err = canvas.ParseFontFace(fontData, 50); err != nil {
 		return nil, err
 	}
-
-	canvas.DrawStringAnchored("名称", 10+nameW/2, textDy+textH/2, 0.5, 0.5)
-	canvas.DrawStringAnchored("数量/个", 10+nameW+10+numberW/2, textDy+textH/2, 0.5, 0.5)
-	canvas.DrawStringAnchored("价格/万", 10+nameW+10+numberW+50+priceW/2, textDy+textH/2, 0.5, 0.5)
+	canvas.DrawStringAnchored("编号", 10+idW/2, textDy+textH/2, 0.5, 0.5)
+	canvas.DrawStringAnchored("名称", 10+idW/2+40+nameW/2, textDy+textH/2, 0.5, 0.5)
+	canvas.DrawStringAnchored("数量", 10+idW/2+40+nameW+40+numberW/2, textDy+textH/2, 0.5, 0.5)
+	canvas.DrawStringAnchored("价格/万", 10+idW/2+40+nameW+40+numberW+10+priceW/2, textDy+textH/2, 0.5, 0.5)
 
 	for _, info := range storeInfo {
 		textDy += textH * 2
 		name := info.Name
 		numberStr := strconv.Itoa(info.Number)
 		price := info.Price
-		canvas.DrawStringAnchored(name, 10+nameW/2, textDy+textH/2, 0.5, 0.5)
-		canvas.DrawStringAnchored(numberStr, 10+nameW+10+numberW/2, textDy+textH/2, 0.5, 0.5)
-		canvas.DrawStringAnchored(strconv.Itoa(price), 10+nameW+10+numberW+50+priceW/2, textDy+textH/2, 0.5, 0.5)
+		id := info.Id
+		canvas.DrawStringAnchored(id, 10+idW/2, textDy+textH/2, 0.5, 0.5)
+		canvas.DrawStringAnchored(name, 10+idW/2+40+nameW/2, textDy+textH/2, 0.5, 0.5)
+		canvas.DrawStringAnchored(numberStr, 10+idW/2+40+nameW+40+numberW/2, textDy+textH/2, 0.5, 0.5)
+		canvas.DrawStringAnchored(strconv.Itoa(price), 10+idW/2+40+nameW+40+numberW+10+priceW/2, textDy+textH/2, 0.5, 0.5)
 	}
 	return canvas.Image(), nil
 }
@@ -337,21 +485,21 @@ func (sql *storeRepo) getStoreThingInfo(thing string) (thingInfos []storeRecord,
 	sql.Lock()
 	defer sql.Unlock()
 	thingInfo := storeRecord{}
-	err = sql.db.Create("storeRecord", &thingInfo)
+	err = sql.db.Create("store_Record", &thingInfo)
 	if err != nil {
 		return
 	}
-	count, err := sql.db.Count("storeRecord")
+	count, err := sql.db.Count("store_Record")
 	if err != nil {
 		return
 	}
 	if count == 0 {
 		return
 	}
-	if !sql.db.CanFind("storeRecord", "where Name = '"+thing+"'") {
+	if !sql.db.CanFind("store_Record", "where product_name = '"+thing+"'") {
 		return
 	}
-	err = sql.db.FindFor("storeRecord", &thingInfo, "where Name = '"+thing+"'", func() error {
+	err = sql.db.FindFor("store_Record", &thingInfo, "where product_name = '"+thing+"'", func() error {
 		thingInfos = append(thingInfos, thingInfo)
 		return nil
 	})
@@ -362,25 +510,25 @@ func (sql *storeRepo) getStoreThingInfo(thing string) (thingInfos []storeRecord,
 func (sql *storeRepo) checkStoreFor(thing storeRecord, number int) (ok bool, err error) {
 	sql.Lock()
 	defer sql.Unlock()
-	err = sql.db.Create("storeRecord", &thing)
+	err = sql.db.Create("store_Record", &thing)
 	if err != nil {
 		return
 	}
-	count, err := sql.db.Count("storeRecord")
+	count, err := sql.db.Count("store_Record")
 	if err != nil {
 		return
 	}
 	if count == 0 {
 		return false, nil
 	}
-	if !sql.db.CanFind("storeRecord", "where Name = "+thing.Name) {
+	if !sql.db.CanFind("store_Record", "where product_name = "+thing.Name) {
 		return false, nil
 	}
-	err = sql.db.Find("storeRecord", &thing, "where Name = "+thing.Name)
+	err = sql.db.Find("store_Record", &thing, "where product_name = "+thing.Name)
 	if err != nil {
 		return
 	}
-	if thing.Number < 1 {
+	if thing.Number < number {
 		return false, nil
 	}
 	return true, nil
@@ -390,9 +538,9 @@ func (sql *storeRepo) checkStoreFor(thing storeRecord, number int) (ok bool, err
 func (sql *storeRepo) updateStoreInfo(thingInfo storeRecord) (err error) {
 	sql.Lock()
 	defer sql.Unlock()
-	err = sql.db.Create("storeRecord", &thingInfo)
+	err = sql.db.Create("store_Record", &thingInfo)
 	if err != nil {
 		return
 	}
-	return sql.db.Insert("storeRecord", &thingInfo)
+	return sql.db.Insert("store_Record", &thingInfo)
 }
