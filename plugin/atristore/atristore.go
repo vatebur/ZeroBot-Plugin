@@ -49,10 +49,10 @@ func init() {
 	engine := control.AutoRegister(&ctrl.Options[*zero.Ctx]{
 		DisableOnDefault: false,
 		Brief:            "ATRI币商店",
-		Help: "- #实物商店\n" +
+		Help: "- #商品列表\n" +
 			"- #购买[商品名称]\n" +
 			"- #购买[商品名称]空格[商品数量]\n" +
-			"- #历史购买记录\n",
+			"- #查看所有订单  (注：需要管理员权限)\n",
 		PrivateDataFolder: "atristore",
 	}).ApplySingle(single.New(
 		single.WithKeyFn(func(ctx *zero.Ctx) int64 { return ctx.Event.GroupID }),
@@ -87,7 +87,7 @@ func init() {
 		return false
 	})
 
-	engine.OnFullMatchGroup([]string{"#实物商店"}, getdb).SetBlock(true).Limit(ctxext.LimitByUser).Handle(func(ctx *zero.Ctx) {
+	engine.OnFullMatchGroup([]string{"#商品列表"}, getdb).SetBlock(true).Limit(ctxext.LimitByUser).Handle(func(ctx *zero.Ctx) {
 		infos, err := dbData.getStoreInfo()
 		if err != nil {
 			ctx.SendChain(message.Text("[ERROR]:获取商品信息失败", err))
@@ -111,7 +111,7 @@ func init() {
 		ctx.SendChain(message.ImageBytes(pic))
 	})
 
-	engine.OnFullMatchGroup([]string{"#历史购买记录"}, getdb).SetBlock(true).Limit(ctxext.LimitByUser).Handle(func(ctx *zero.Ctx) {
+	engine.OnFullMatchGroup([]string{"#查看所有订单"}, getdb, zero.AdminPermission).SetBlock(true).Limit(ctxext.LimitByUser).Handle(func(ctx *zero.Ctx) {
 		infos, err := dbData.getBugRecordInfo()
 		if err != nil {
 			ctx.SendChain(message.Text("[ERROR]:获取商品信息失败", err))
@@ -276,7 +276,7 @@ func init() {
 
 
 	*/
-	engine.OnRegex(`^#购买\s*([^ ]*)\s*(\d*)$`, getdb).SetBlock(true).Limit(ctxext.LimitByUser).Handle(func(ctx *zero.Ctx) {
+	engine.OnRegex(`^#购买\s*([^ ]*)\s*(\d*)$`, getdb).SetBlock(true).Limit(ctxext.LimitByGroup).Handle(func(ctx *zero.Ctx) {
 		uid := ctx.Event.UserID
 		thingName := ctx.State["regex_matched"].([]string)[1]
 		number, _ := strconv.Atoi(ctx.State["regex_matched"].([]string)[2])
@@ -361,7 +361,7 @@ func init() {
 		userid := ctx.Event.UserID
 		username := ctx.CardOrNickName(userid)
 		for _, su := range zero.BotConfig.SuperUsers {
-			msg := username + "(QQ:" + strconv.FormatInt(userid, 10) + "),花费：" + strconv.Itoa(price) + "W。购买了" + strconv.Itoa(number) + "个《" + thingName + "》请安排发货"
+			msg := username + "(QQ:" + strconv.FormatInt(userid, 10) + "),花费：" + strconv.Itoa(price) + "W。购买了" + strconv.Itoa(number) + "个《" + thingName + "》\n请安排发货"
 			ctx.SendPrivateMessage(su, msg)
 		}
 
