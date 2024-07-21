@@ -28,7 +28,7 @@ type storeRepo struct {
 	sync.RWMutex
 }
 type storeRecord struct {
-	Id     int    `db:"product_id"`     // 商品编号
+	ID     int    `db:"product_id"`     // 商品编号
 	Name   string `db:"product_name"`   // 商品名
 	Number int    `db:"product_number"` // 商品数量
 	Price  int    `db:"product_price"`  // 商品价格
@@ -187,7 +187,7 @@ func init() {
 
 				msg := make(message.Message, 0, 3+len(infos))
 				for _, info := range infos {
-					msg = append(msg, message.Text("序号："), message.Text(info.Id), message.Text("\t商品名："), message.Text(info.Name))
+					msg = append(msg, message.Text("序号："), message.Text(info.ID), message.Text("\t商品名："), message.Text(info.Name))
 				}
 				ctx.SendChain(message.Text("序号：99 \t取消"))
 
@@ -483,7 +483,7 @@ func drawStoreInfoImage(storeInfo []storeRecord) (picImage image.Image, err erro
 		name := info.Name
 		numberStr := strconv.Itoa(info.Number)
 		price := info.Price
-		id := info.Id
+		id := info.ID
 		canvas.DrawStringAnchored(strconv.Itoa(id), 10+idW/2, textDy+textH/2, 0.5, 0.5)
 		canvas.DrawStringAnchored(name, 10+idW/2+40+nameW/2, textDy+textH/2, 0.5, 0.5)
 		canvas.DrawStringAnchored(numberStr, 10+idW/2+40+nameW+40+numberW/2, textDy+textH/2, 0.5, 0.5)
@@ -554,7 +554,7 @@ func (sql *storeRepo) checkStoreFor(thing storeRecord, number int) (ok bool, err
 	if err != nil {
 		return
 	}
-	limitID := "where product_id = " + strconv.Itoa(thing.Id)
+	limitID := "where product_id = " + strconv.Itoa(thing.ID)
 	if !sql.db.CanFind("store_Record", limitID) {
 		return false, nil
 	}
@@ -580,7 +580,7 @@ func (sql *storeRepo) updateStoreInfo(thingInfo storeRecord) (err error) {
 }
 
 // 更新商店信息
-func (sql *storeRepo) updateBugRecordInfo(userId int64, productName string, buyNumber int, buyPrice int) (err error) {
+func (sql *storeRepo) updateBugRecordInfo(userID int64, productName string, buyNumber int, buyPrice int) (err error) {
 	sql.Lock()
 	defer sql.Unlock()
 	thingInfo := buyRecord{}
@@ -589,7 +589,7 @@ func (sql *storeRepo) updateBugRecordInfo(userId int64, productName string, buyN
 		return
 	}
 	return sql.db.Insert("buy_Record", &buyRecord{
-		UserID:  userId,
+		UserID:  userID,
 		Name:    productName,
 		Number:  buyNumber,
 		Price:   buyPrice,
