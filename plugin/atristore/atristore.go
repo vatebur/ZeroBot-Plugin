@@ -276,7 +276,7 @@ func init() {
 
 
 	*/
-	engine.OnRegex(`^#购买([^ ]*)\s*(\d*)$`, getdb).SetBlock(true).Limit(ctxext.LimitByUser).Handle(func(ctx *zero.Ctx) {
+	engine.OnRegex(`^#购买\s*([^ ]*)\s*(\d*)$`, getdb).SetBlock(true).Limit(ctxext.LimitByUser).Handle(func(ctx *zero.Ctx) {
 		uid := ctx.Event.UserID
 		thingName := ctx.State["regex_matched"].([]string)[1]
 		number, _ := strconv.Atoi(ctx.State["regex_matched"].([]string)[2])
