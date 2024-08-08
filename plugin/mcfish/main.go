@@ -383,8 +383,7 @@ func (sql *fishdb) updateUserEquip(userInfo equip) (err error) {
 	return sql.db.Insert("equips", &userInfo)
 }
 
-func (sql *fishdb) pickFishFor(uid int64, number int) (fishNames map[string]int, err error) {
-	fishNames = make(map[string]int, 6)
+func (sql *fishdb) pickFishFor(uid int64, number int) (err error) {
 	name := strconv.FormatInt(uid, 10) + "Pack"
 	sql.Lock()
 	defer sql.Unlock()
@@ -400,10 +399,11 @@ func (sql *fishdb) pickFishFor(uid int64, number int) (fishNames map[string]int,
 	if count == 0 {
 		return
 	}
-	if !sql.db.CanFind(name, "where Type is 'fish'") {
+	if !sql.db.CanFind(name, "where Name is '热带鱼'") {
 		return
 	}
 	fishInfo := article{}
+<<<<<<< Updated upstream
 	k := 0
 	for i := number * 2; i > 0 && k < len(fishList); {
 		_ = sql.db.Find(name, &fishInfo, "where Name is '"+fishList[k]+"'")
@@ -429,7 +429,26 @@ func (sql *fishdb) pickFishFor(uid int64, number int) (fishNames map[string]int,
 		if err != nil {
 			return
 		}
+=======
+	_ = sql.db.Find(name, &fishInfo, "where Name is '热带鱼'")
+	// 美西螈要吃二倍的鱼
+	number *= 2
+	// 判断鱼够不够吃
+	if fishInfo.Number < number {
+		number = fishInfo.Number
+		err = sql.db.Del(name, "where Duration = "+strconv.FormatInt(fishInfo.Duration, 10))
+	} else {
+		fishInfo.Number -= number
+		err = sql.db.Insert(name, &fishInfo)
+>>>>>>> Stashed changes
 	}
+	// 返回实际钓鱼次数，鱼为奇数时多送一条鱼
+	number = (number + 1) / 2
+
+	if err != nil {
+		return
+	}
+
 	return
 }
 

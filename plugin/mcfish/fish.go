@@ -129,12 +129,12 @@ func init() {
 				fishNumber *= 3
 			}
 		} else {
-			fishNmaes, err := dbdata.pickFishFor(uid, fishNumber)
+			err := dbdata.pickFishFor(uid, fishNumber)
 			if err != nil {
 				ctx.SendChain(message.Text("[ERROR at fish.go.5.1]:", err))
 				return
 			}
-			if len(fishNmaes) == 0 {
+			if fishNumber == 0 {
 				equipInfo.Durable = 0
 				err = dbdata.updateUserEquip(equipInfo)
 				if err != nil {
@@ -144,6 +144,7 @@ func init() {
 				return
 			}
 			msg = "(美西螈吃掉了"
+<<<<<<< Updated upstream
 			fishNumber = 0
 			for name, number := range fishNmaes {
 				fishNumber += number
@@ -151,6 +152,9 @@ func init() {
 			}
 			msg += ")"
 			fishNumber /= 2
+=======
+			msg += strconv.Itoa(fishNumber) + "条热带鱼）"
+>>>>>>> Stashed changes
 		}
 		waitTime := 120 / (equipInfo.Induce + 1)
 		ctx.SendChain(message.Reply(ctx.Event.MessageID), message.Text("你开始去钓鱼了,请耐心等待鱼上钩(预计要", time.Second*time.Duration(waitTime), ")"))
