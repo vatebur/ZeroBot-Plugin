@@ -8,6 +8,7 @@ package atri
 import (
 	"encoding/base64"
 	"math/rand"
+	"os"
 	"time"
 
 	zero "github.com/wdvxdr1123/ZeroBot"
@@ -20,7 +21,9 @@ import (
 type datagetter func(string, bool) ([]byte, error)
 
 func (dgtr datagetter) randImage(file ...string) message.MessageSegment {
-	data, err := dgtr(file[rand.Intn(len(file))], true)
+	//data, err := dgtr(file[rand.Intn(len(file))], true)
+	filePath := "data/Atri/"+file[rand.Intn(len(file))]
+	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return message.Text("ERROR: ", err)
 	}
@@ -28,7 +31,9 @@ func (dgtr datagetter) randImage(file ...string) message.MessageSegment {
 }
 
 func (dgtr datagetter) randRecord(file ...string) message.MessageSegment {
-	data, err := dgtr(file[rand.Intn(len(file))], true)
+	//data, err := dgtr(file[rand.Intn(len(file))], true)
+	filePath := "data/Atri/"+file[rand.Intn(len(file))]
+	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return message.Text("ERROR: ", err)
 	}
@@ -78,7 +83,7 @@ func init() { // 插件主体
 		})
 	engine.OnFullMatchGroup([]string{"喜欢", "爱你", "爱", "suki", "daisuki", "すき", "好き", "贴贴", "老婆", "亲一个", "mua"}, zero.OnlyToMe).SetBlock(true).
 		Handle(func(ctx *zero.Ctx) {
-			ctx.SendChain(dgtr.randImage("SUKI.jpg", "SUKI1.jpg", "SUKI2.png"))
+			ctx.SendChain(dgtr.randImage("SUKI.jpg", "SUKI1.jpg", "SUKI2.jpg"))
 		})
 	engine.OnKeywordGroup([]string{"草你妈", "操你妈", "脑瘫", "废柴", "fw", "five", "废物", "战斗", "爬", "爪巴", "sb", "SB", "傻B"}, zero.OnlyToMe).SetBlock(true).
 		Handle(func(ctx *zero.Ctx) {
@@ -214,7 +219,7 @@ func init() { // 插件主体
 	engine.OnKeywordGroup([]string{"好吗", "是吗", "行不行", "能不能", "可不可以"}).SetBlock(true).
 		Handle(func(ctx *zero.Ctx) {
 			if rand.Intn(2) == 0 {
-				ctx.SendChain(dgtr.randImage("YES.png", "NO.jpg"))
+				ctx.SendChain(dgtr.randImage("YES.jpg", "NO.jpg"))
 			}
 		})
 	engine.OnKeywordGroup([]string{"啊这"}).SetBlock(true).
