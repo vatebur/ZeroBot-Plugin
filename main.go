@@ -6,15 +6,17 @@ import (
 	"flag"
 	"fmt"
 	"math/rand"
+	"net/http"
 	"os"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
 
-	_ "github.com/FloatTech/ZeroBot-Plugin/console" // 更改控制台属性
+	_ "net/http/pprof"
 
-	"github.com/FloatTech/ZeroBot-Plugin/kanban" // 打印 banner
+	_ "github.com/FloatTech/ZeroBot-Plugin/console" // 更改控制台属性
+	"github.com/FloatTech/ZeroBot-Plugin/kanban"    // 打印 banner
 
 	// ---------以下插件均可通过前面加 // 注释，注释后停用并不加载插件--------- //
 	// ----------------------插件优先级按顺序从高到低---------------------- //
@@ -308,6 +310,16 @@ func init() {
 }
 
 func main() {
+	runtime.GOMAXPROCS(1)              // 限制 CPU 使用数，避免过载
+	runtime.SetMutexProfileFraction(1) // 开启对锁调用的跟踪
+	runtime.SetBlockProfileRate(1)     // 开启对阻塞操作的跟踪
+	go func() {
+		// 启动一个 http server，注意 pprof 相关的 handler 已经自动注册过了
+		if err := http.ListenAndServe(":6060", nil); err != nil {
+			logrus.Error(err)
+		}
+		os.Exit(0)
+	}()
 	if !strings.Contains(runtime.Version(), "go1.2") { // go1.20之前版本需要全局 seed，其他插件无需再 seed
 		rand.Seed(time.Now().UnixNano()) //nolint: staticcheck
 	}
