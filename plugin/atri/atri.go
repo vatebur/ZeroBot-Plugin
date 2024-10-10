@@ -21,8 +21,8 @@ import (
 type datagetter func(string, bool) ([]byte, error)
 
 func (dgtr datagetter) randImage(file ...string) message.MessageSegment {
-	//data, err := dgtr(file[rand.Intn(len(file))], true)
-	filePath := "data/Atri/"+file[rand.Intn(len(file))]
+	// data, err := dgtr(file[rand.Intn(len(file))], true)
+	filePath := "data/Atri/" + file[rand.Intn(len(file))]
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return message.Text("ERROR: ", err)
@@ -31,8 +31,8 @@ func (dgtr datagetter) randImage(file ...string) message.MessageSegment {
 }
 
 func (dgtr datagetter) randRecord(file ...string) message.MessageSegment {
-	//data, err := dgtr(file[rand.Intn(len(file))], true)
-	filePath := "data/Atri/"+file[rand.Intn(len(file))]
+	// data, err := dgtr(file[rand.Intn(len(file))], true)
+	filePath := "data/Atri/" + file[rand.Intn(len(file))]
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return message.Text("ERROR: ", err)
