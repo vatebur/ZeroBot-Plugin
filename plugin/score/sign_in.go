@@ -4,7 +4,6 @@ package score
 import (
 	"encoding/base64"
 	"errors"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"math"
 	"math/rand"
@@ -12,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/FloatTech/AnimeAPI/bilibili"
 	"github.com/FloatTech/AnimeAPI/wallet"
@@ -342,7 +343,6 @@ func initPic(picFile string, uid int64) (avatar []byte, err error) {
 	// 获取网络图片失败，使用本地已有的图片
 	log.Error("[score:get online img error]:", err)
 	return avatar, copyImage(picFile)
-
 }
 
 // 使用"file:"发送图片失败后，改用base64发送
